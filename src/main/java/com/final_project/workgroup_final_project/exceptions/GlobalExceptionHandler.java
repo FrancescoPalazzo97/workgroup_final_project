@@ -23,6 +23,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e);
     }
 
+    @ExceptionHandler(BorrowingNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleBorrowingNotFound(BorrowingNotFoundException ex) {
+        ErrorResponse e = createErrorResponse(ex, HttpStatus.NOT_FOUND);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
         ErrorResponse e = createErrorResponse(ex, HttpStatus.BAD_REQUEST);
