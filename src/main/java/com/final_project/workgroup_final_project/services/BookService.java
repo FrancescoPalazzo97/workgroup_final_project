@@ -4,25 +4,27 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.final_project.workgroup_final_project.models.records.BookDetailResponse;
 import com.final_project.workgroup_final_project.models.records.BookRequest;
 import com.final_project.workgroup_final_project.models.records.BookResponse;
 import com.final_project.workgroup_final_project.exceptions.BookNotFoundException;
 import com.final_project.workgroup_final_project.models.Book;
+import com.final_project.workgroup_final_project.models.records.BorrowingResponse;
 import com.final_project.workgroup_final_project.repos.BookRepo;
 
 @Service
 public class BookService {
 
-    private BookRepo bookRepo;
+    private final BookRepo bookRepo;
 
     public BookService(BookRepo bookRepo) {
         this.bookRepo = bookRepo;
     }
 
     public List<BookResponse> findAll() {
-        return bookRepo
-                .findAll()
+        return bookRepo.findAll()
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -38,24 +40,39 @@ public class BookService {
         return result.get();
     }
 
-    public BookResponse getById(Integer id) {
-        return toResponse(findById(id));
+    @Transactional
+    public BookDetailResponse getById(Integer id) {
+        Book book = findById(id);
+
+        List<BorrowingResponse> borrowings = book.getBorrowings()
+                .stream()
+                .map(b -> new BorrowingResponse(
+                        b.getId(),
+                        b.getBook().getId(),
+                        b.getBorrowinDate(),
+                        b.getReturDate(),
+                        b.getNotes()))
+                .toList();
+
+        return new BookDetailResponse(
+                book.getId(),
+                book.getTitolo(),
+                book.getAutore(),
+                book.getAnnoPubblicazione(),
+                book.getDisponibile(),
+                borrowings);
     }
 
     public BookResponse save(BookRequest newBookRequest) {
         Book newBook = toEntity(newBookRequest);
-        Book savedBook = bookRepo.save(newBook);
-        return toResponse(savedBook);
+        return toResponse(bookRepo.save(newBook));
     }
 
     public BookResponse update(Integer id, BookRequest bookRequestUpdate) {
         Book oldBook = findById(id);
         Book bookUpdate = toEntity(bookRequestUpdate);
         bookUpdate.setId(oldBook.getId());
-
-        Book updatedBook = bookRepo.save(bookUpdate);
-
-        return toResponse(updatedBook);
+        return toResponse(bookRepo.save(bookUpdate));
     }
 
     public void delete(Integer id) {

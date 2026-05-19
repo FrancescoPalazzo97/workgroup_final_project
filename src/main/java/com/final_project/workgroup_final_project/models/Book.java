@@ -1,10 +1,16 @@
 package com.final_project.workgroup_final_project.models;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -39,6 +45,10 @@ public class Book {
     @NotNull(message = "Il campo disponibile è obbligatorio")
     @Column(nullable = false)
     private Boolean disponibile;
+
+    @JsonManagedReference("book-borrowings")
+    @OneToMany(mappedBy = "book", cascade = { CascadeType.REMOVE })
+    private List<Borrowing> borrowings;
 
     public Book() {
     }
@@ -89,4 +99,17 @@ public class Book {
     public void setDisponibile(Boolean disponibile) {
         this.disponibile = disponibile;
     }
+
+    public Boolean isDisponibile() {
+        return this.disponibile;
+    }
+
+    public List<Borrowing> getBorrowings() {
+        return this.borrowings;
+    }
+
+    public void setBorrowings(List<Borrowing> borrowings) {
+        this.borrowings = borrowings;
+    }
+
 }
