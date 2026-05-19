@@ -8,6 +8,5 @@ import com.final_project.workgroup_final_project.models.Borrowing;
 
 public interface BorrowingRepo extends JpaRepository<Borrowing, Integer> {
 
-    List<Borrowing> findByUserId(Long userId);
-
+    List<Borrowing> findByUserEmail(String email);
 }

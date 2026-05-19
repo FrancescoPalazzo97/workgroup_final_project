@@ -34,41 +34,14 @@ public class BorrowingService {
     }
 
     public List<BorrowingResponse> findAll() {
-        User currentUser = getAuthenticatedUser();
+        List<Borrowing> borrowings = isAdmin()
+                ? borrowingRepo.findAll()
+                : borrowingRepo.findByUserEmail(currentUserEmail());
 
-        if (currentUser.getRole() == Role.ADMIN) {
-            return borrowingRepo.findAll().stream().map(this::toResponse).toList();
-        }
-
-        return borrowingRepo.findByUserId(currentUser.getId()).stream().map(this::toResponse).toList();
-    }
-
-    public BorrowingResponse getById(Integer id) {
-        Borrowing borrowing = findById(id);
-        checkOwnershipOrAdmin(borrowing);
-        return toResponse(borrowing);
-    }
-
-    public BorrowingResponse save(BorrowingRequest request) {
-        User currentUser = getAuthenticatedUser();
-        Borrowing borrowing = toEntity(request);
-        borrowing.setUser(currentUser);
-        return toResponse(borrowingRepo.save(borrowing));
-    }
-
-    public BorrowingResponse update(Integer id, BorrowingRequest request) {
-        Borrowing existing = findById(id);
-        checkOwnershipOrAdmin(existing);
-        Borrowing updated = toEntity(request);
-        updated.setId(existing.getId());
-        updated.setUser(existing.getUser());
-        return toResponse(borrowingRepo.save(updated));
-    }
-
-    public void delete(Integer id) {
-        Borrowing borrowing = findById(id);
-        checkOwnershipOrAdmin(borrowing);
-        borrowingRepo.deleteById(id);
+        return borrowings
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private Borrowing findById(Integer id) {
@@ -81,23 +54,31 @@ public class BorrowingService {
         return result.get();
     }
 
-    private void checkOwnershipOrAdmin(Borrowing borrowing) {
-        User currentUser = getAuthenticatedUser();
-
-        if (currentUser.getRole() == Role.ADMIN) {
-            return;
-        }
-
-        if (!borrowing.getUser().getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You can only access your own borrowings");
-        }
+    public BorrowingResponse getById(Integer id) {
+        Borrowing borrowing = findById(id);
+        checkCanAccess(borrowing);
+        return toResponse(borrowing);
     }
 
-    private User getAuthenticatedUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
+    public BorrowingResponse save(BorrowingRequest request) {
+        Borrowing borrowing = toEntity(request);
+        borrowing.setUser(currentUser());
+        return toResponse(borrowingRepo.save(borrowing));
+    }
+
+    public BorrowingResponse update(Integer id, BorrowingRequest request) {
+        Borrowing existing = findById(id);
+        checkCanAccess(existing);
+        Borrowing updated = toEntity(request);
+        updated.setId(existing.getId());
+        updated.setUser(existing.getUser());
+        return toResponse(borrowingRepo.save(updated));
+    }
+
+    public void delete(Integer id) {
+        Borrowing borrowing = findById(id);
+        checkCanAccess(borrowing);
+        borrowingRepo.deleteById(id);
     }
 
     private Borrowing toEntity(BorrowingRequest request) {
@@ -110,6 +91,40 @@ public class BorrowingService {
         borrowing.setReturDate(request.returnDate());
         borrowing.setNotes(request.notes());
         return borrowing;
+    }
+
+    private void checkCanAccess(Borrowing borrowing) {
+        if (isAdmin()) {
+            return;
+        }
+
+        User user = borrowing.getUser();
+        if (user == null || !currentUserEmail().equals(user.getEmail())) {
+            throw new BorrowingNotFoundException(borrowing.getId());
+        }
+    }
+
+    private User currentUser() {
+        return userRepository.findByEmail(currentUserEmail())
+                .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"));
+    }
+
+    private String currentUserEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getName() == null) {
+            throw new IllegalArgumentException("Authentication is required");
+        }
+
+        return authentication.getName();
+    }
+
+    private boolean isAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        return authentication != null && authentication.getAuthorities()
+                .stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
     private BorrowingResponse toResponse(Borrowing borrowing) {

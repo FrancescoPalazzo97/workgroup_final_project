@@ -58,6 +58,14 @@ public class Borrowing {
         this.book = book;
     }
 
+    public User getUser() {
+        return this.user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
     public LocalDate getBorrowinDate() {
         return this.borrowinDate;
     }
@@ -80,14 +88,6 @@ public class Borrowing {
 
     public void setNotes(String notes) {
         this.notes = notes;
-    }
-
-    public User getUser() {
-        return this.user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 
 }
