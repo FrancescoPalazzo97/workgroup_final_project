@@ -12,7 +12,6 @@ import com.final_project.workgroup_final_project.exceptions.BookNotFoundExceptio
 import com.final_project.workgroup_final_project.exceptions.BorrowingNotFoundException;
 import com.final_project.workgroup_final_project.models.Book;
 import com.final_project.workgroup_final_project.models.Borrowing;
-import com.final_project.workgroup_final_project.models.Role;
 import com.final_project.workgroup_final_project.models.User;
 import com.final_project.workgroup_final_project.models.records.BorrowingRequest;
 import com.final_project.workgroup_final_project.models.records.BorrowingResponse;
@@ -100,7 +99,7 @@ public class BorrowingService {
 
         User user = borrowing.getUser();
         if (user == null || !currentUserEmail().equals(user.getEmail())) {
-            throw new BorrowingNotFoundException(borrowing.getId());
+            throw new AccessDeniedException("You can access only your own borrowings");
         }
     }
 
@@ -128,11 +127,13 @@ public class BorrowingService {
     }
 
     private BorrowingResponse toResponse(Borrowing borrowing) {
+        User user = borrowing.getUser();
+
         return new BorrowingResponse(
                 borrowing.getId(),
                 borrowing.getBook().getId(),
-                borrowing.getUser().getId(),
-                borrowing.getUser().getFullName(),
+                user != null ? user.getId() : null,
+                user != null ? user.getFullName() : null,
                 borrowing.getBorrowinDate(),
                 borrowing.getReturDate(),
                 borrowing.getNotes());
