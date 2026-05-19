@@ -67,13 +67,11 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/book").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/book").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/book/available").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/book/*").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/book/*").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/book/*").hasRole("ADMIN")
-                        .requestMatchers("/api/borrows/**").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/api/books", "/api/books/*").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/books").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/books/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/books/*").hasRole("ADMIN")
+                        .requestMatchers("/api/borrowings/**").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
