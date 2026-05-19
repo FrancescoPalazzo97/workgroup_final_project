@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class WorkgroupFinalProjectApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(WorkgroupFinalProjectApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(WorkgroupFinalProjectApplication.class, args);
+    }
 }
