@@ -1,5 +1,6 @@
 package com.final_project.workgroup_final_project.controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/borrowings")
+@SecurityRequirement(name = "bearerAuth")
 public class BorrowingController {
 
     private final BorrowingService borrowingService;

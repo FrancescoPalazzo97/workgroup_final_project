@@ -1,5 +1,6 @@
 package com.final_project.workgroup_final_project.controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -41,17 +42,20 @@ public class BookControllers {
     }
 
     @PostMapping
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<BookResponse> save(@Valid @RequestBody BookRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bookService.save(request));
     }
 
     @PutMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<BookResponse> update(@PathVariable Integer id,
             @Valid @RequestBody BookRequest request) {
         return ResponseEntity.ok(bookService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         bookService.delete(id);
         return ResponseEntity.noContent().build();
