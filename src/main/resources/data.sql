@@ -14,3 +14,4 @@ INSERT INTO books (titolo, autore, anno_pubblicazione, disponibile) VALUES
 ('Anna Karenina', 'Lev Tolstoj', 1878, true),
 ('Il processo', 'Franz Kafka', 1925, false),
 ('Sulla strada', 'Jack Kerouac', 1957, true);
+

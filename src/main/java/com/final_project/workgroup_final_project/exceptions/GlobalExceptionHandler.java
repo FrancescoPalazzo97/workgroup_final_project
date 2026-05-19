@@ -1,19 +1,23 @@
 package com.final_project.workgroup_final_project.exceptions;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.final_project.workgroup_final_project.models.records.ErrorResponse;
 import com.final_project.workgroup_final_project.models.records.ValidationErrorResponse;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BookNotFoundException.class)
@@ -51,6 +55,34 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(e);
     }
 
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<AuthErrorResponse> handleUserAlreadyExists(
+            UserAlreadyExistsException ex,
+            HttpServletRequest request) {
+        return buildAuthResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<AuthErrorResponse> handleBadCredentials(
+            BadCredentialsException ex,
+            HttpServletRequest request) {
+        return buildAuthResponse(HttpStatus.UNAUTHORIZED, "Invalid email or password", request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<AuthErrorResponse> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+        return buildAuthResponse(HttpStatus.FORBIDDEN, "Access denied", request);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<AuthErrorResponse> handleAuthenticationException(
+            AuthenticationException ex,
+            HttpServletRequest request) {
+        return buildAuthResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         ErrorResponse e = createErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -63,5 +95,27 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 status.value(),
                 LocalDateTime.now());
+    }
+
+    private ResponseEntity<AuthErrorResponse> buildAuthResponse(
+            HttpStatus status,
+            String message,
+            HttpServletRequest request) {
+        AuthErrorResponse errorResponse = new AuthErrorResponse(
+                LocalDateTime.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                request.getRequestURI());
+
+        return ResponseEntity.status(status).body(errorResponse);
+    }
+
+    private record AuthErrorResponse(
+            LocalDateTime timestamp,
+            int status,
+            String error,
+            String message,
+            String path) {
     }
 }
