@@ -1,0 +1,16 @@
+INSERT INTO books (titolo, autore, anno_pubblicazione, disponibile) VALUES
+('Il nome della rosa', 'Umberto Eco', 1980, true),
+('Se questo è un uomo', 'Primo Levi', 1947, true),
+('I promessi sposi', 'Alessandro Manzoni', 1827, false),
+('Divina Commedia', 'Dante Alighieri', 1320, true),
+('Il gattopardo', 'Giuseppe Tomasi di Lampedusa', 1958, false),
+('Cent anni di solitudine', 'Gabriel García Márquez', 1967, true),
+('1984', 'George Orwell', 1949, true),
+('Il maestro e Margherita', 'Mikhail Bulgakov', 1967, false),
+('Delitto e castigo', 'Fëdor Dostoevskij', 1866, true),
+('Harry Potter e la pietra filosofale', 'J.K. Rowling', 1997, true),
+('Il Signore degli Anelli', 'J.R.R. Tolkien', 1954, false),
+('Don Chisciotte', 'Miguel de Cervantes', 1605, true),
+('Anna Karenina', 'Lev Tolstoj', 1878, true),
+('Il processo', 'Franz Kafka', 1925, false),
+('Sulla strada', 'Jack Kerouac', 1957, true);
