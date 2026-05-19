@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
-import jakarta.annotation.Generated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,6 +27,10 @@ public class Borrowing {
     @ManyToOne
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @NotNull(message = "The borrowing date cannot be null")
     @PastOrPresent(message = "The borrowing date cannot be set in the future")
@@ -53,6 +56,14 @@ public class Borrowing {
 
     public void setBook(Book book) {
         this.book = book;
+    }
+
+    public User getUser() {
+        return this.user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public LocalDate getBorrowinDate() {
