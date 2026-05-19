@@ -3,10 +3,7 @@ package com.final_project.workgroup_final_project.services;
 import java.util.List;
 import java.util.Optional;
 
-<<<<<<< HEAD
-=======
 import org.springframework.security.access.AccessDeniedException;
->>>>>>> e60386c94d19b25e074e1256d0eb9af7516d57f1
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -15,10 +12,7 @@ import com.final_project.workgroup_final_project.exceptions.BookNotFoundExceptio
 import com.final_project.workgroup_final_project.exceptions.BorrowingNotFoundException;
 import com.final_project.workgroup_final_project.models.Book;
 import com.final_project.workgroup_final_project.models.Borrowing;
-<<<<<<< HEAD
-=======
 import com.final_project.workgroup_final_project.models.Role;
->>>>>>> e60386c94d19b25e074e1256d0eb9af7516d57f1
 import com.final_project.workgroup_final_project.models.User;
 import com.final_project.workgroup_final_project.models.records.BorrowingRequest;
 import com.final_project.workgroup_final_project.models.records.BorrowingResponse;
@@ -40,7 +34,6 @@ public class BorrowingService {
     }
 
     public List<BorrowingResponse> findAll() {
-<<<<<<< HEAD
         List<Borrowing> borrowings = isAdmin()
                 ? borrowingRepo.findAll()
                 : borrowingRepo.findByUserEmail(currentUserEmail());
@@ -49,43 +42,6 @@ public class BorrowingService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
-=======
-        User currentUser = getAuthenticatedUser();
-
-        if (currentUser.getRole() == Role.ADMIN) {
-            return borrowingRepo.findAll().stream().map(this::toResponse).toList();
-        }
-
-        return borrowingRepo.findByUserId(currentUser.getId()).stream().map(this::toResponse).toList();
-    }
-
-    public BorrowingResponse getById(Integer id) {
-        Borrowing borrowing = findById(id);
-        checkOwnershipOrAdmin(borrowing);
-        return toResponse(borrowing);
-    }
-
-    public BorrowingResponse save(BorrowingRequest request) {
-        User currentUser = getAuthenticatedUser();
-        Borrowing borrowing = toEntity(request);
-        borrowing.setUser(currentUser);
-        return toResponse(borrowingRepo.save(borrowing));
-    }
-
-    public BorrowingResponse update(Integer id, BorrowingRequest request) {
-        Borrowing existing = findById(id);
-        checkOwnershipOrAdmin(existing);
-        Borrowing updated = toEntity(request);
-        updated.setId(existing.getId());
-        updated.setUser(existing.getUser());
-        return toResponse(borrowingRepo.save(updated));
-    }
-
-    public void delete(Integer id) {
-        Borrowing borrowing = findById(id);
-        checkOwnershipOrAdmin(borrowing);
-        borrowingRepo.deleteById(id);
->>>>>>> e60386c94d19b25e074e1256d0eb9af7516d57f1
     }
 
     private Borrowing findById(Integer id) {
@@ -98,7 +54,6 @@ public class BorrowingService {
         return result.get();
     }
 
-<<<<<<< HEAD
     public BorrowingResponse getById(Integer id) {
         Borrowing borrowing = findById(id);
         checkCanAccess(borrowing);
@@ -124,25 +79,6 @@ public class BorrowingService {
         Borrowing borrowing = findById(id);
         checkCanAccess(borrowing);
         borrowingRepo.deleteById(id);
-=======
-    private void checkOwnershipOrAdmin(Borrowing borrowing) {
-        User currentUser = getAuthenticatedUser();
-
-        if (currentUser.getRole() == Role.ADMIN) {
-            return;
-        }
-
-        if (!borrowing.getUser().getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You can only access your own borrowings");
-        }
-    }
-
-    private User getAuthenticatedUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
->>>>>>> e60386c94d19b25e074e1256d0eb9af7516d57f1
     }
 
     private Borrowing toEntity(BorrowingRequest request) {

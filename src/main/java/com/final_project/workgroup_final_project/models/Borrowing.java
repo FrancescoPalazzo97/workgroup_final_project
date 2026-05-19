@@ -29,11 +29,7 @@ public class Borrowing {
     private Book book;
 
     @ManyToOne
-<<<<<<< HEAD
-    @JoinColumn(name = "user_id")
-=======
     @JoinColumn(name = "user_id", nullable = false)
->>>>>>> e60386c94d19b25e074e1256d0eb9af7516d57f1
     private User user;
 
     @NotNull(message = "The borrowing date cannot be null")
@@ -92,14 +88,6 @@ public class Borrowing {
 
     public void setNotes(String notes) {
         this.notes = notes;
-    }
-
-    public User getUser() {
-        return this.user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 
 }
