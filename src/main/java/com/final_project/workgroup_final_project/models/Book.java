@@ -18,7 +18,7 @@ public class Book {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @NotBlank(message = "Il titolo è obbligatorio")
     @Size(min = 2, max = 255, message = "Il titolo non può superare i 255 caratteri")
@@ -50,11 +50,11 @@ public class Book {
         this.disponibile = disponibile;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
