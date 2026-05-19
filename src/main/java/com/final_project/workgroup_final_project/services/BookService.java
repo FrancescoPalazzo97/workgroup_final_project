@@ -11,6 +11,7 @@ import com.final_project.workgroup_final_project.models.records.BookRequest;
 import com.final_project.workgroup_final_project.models.records.BookResponse;
 import com.final_project.workgroup_final_project.exceptions.BookNotFoundException;
 import com.final_project.workgroup_final_project.models.Book;
+import com.final_project.workgroup_final_project.models.Borrowing;
 import com.final_project.workgroup_final_project.models.records.BorrowingResponse;
 import com.final_project.workgroup_final_project.repos.BookRepo;
 
@@ -46,21 +47,10 @@ public class BookService {
 
         List<BorrowingResponse> borrowings = book.getBorrowings()
                 .stream()
-                .map(b -> new BorrowingResponse(
-                        b.getId(),
-                        b.getBook().getId(),
-                        b.getBorrowinDate(),
-                        b.getReturDate(),
-                        b.getNotes()))
+                .map(this::toBorrowingResponse)
                 .toList();
 
-        return new BookDetailResponse(
-                book.getId(),
-                book.getTitolo(),
-                book.getAutore(),
-                book.getAnnoPubblicazione(),
-                book.getDisponibile(),
-                borrowings);
+        return toDetailResponse(book, borrowings);
     }
 
     public BookResponse save(BookRequest newBookRequest) {
@@ -98,5 +88,24 @@ public class BookService {
                 book.getAutore(),
                 book.getAnnoPubblicazione(),
                 book.getDisponibile());
+    }
+
+    private BookDetailResponse toDetailResponse(Book book, List<BorrowingResponse> borrowings) {
+        return new BookDetailResponse(
+                book.getId(),
+                book.getTitolo(),
+                book.getAutore(),
+                book.getAnnoPubblicazione(),
+                book.getDisponibile(),
+                borrowings);
+    }
+
+    private BorrowingResponse toBorrowingResponse(Borrowing borrowing) {
+        return new BorrowingResponse(
+                borrowing.getId(),
+                borrowing.getBook().getId(),
+                borrowing.getBorrowinDate(),
+                borrowing.getReturDate(),
+                borrowing.getNotes());
     }
 }
