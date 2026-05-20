@@ -16,7 +16,7 @@ public interface BorrowingRepo extends JpaRepository<Borrowing, Integer> {
             select count(b) > 0
             from Borrowing b
             where b.book.id = :bookId
-            and (b.returDate is null or b.returDate >= :today)
+            and (b.returnDate is null or b.returnDate >= :today)
             """)
     boolean existsActiveBorrowingByBookId(@Param("bookId") Integer bookId, @Param("today") LocalDate today);
 
@@ -25,7 +25,7 @@ public interface BorrowingRepo extends JpaRepository<Borrowing, Integer> {
             from Borrowing b
             where b.book.id = :bookId
             and b.id <> :borrowingId
-            and (b.returDate is null or b.returDate >= :today)
+            and (b.returnDate is null or b.returnDate >= :today)
             """)
     boolean existsOtherActiveBorrowingByBookId(
             @Param("bookId") Integer bookId,

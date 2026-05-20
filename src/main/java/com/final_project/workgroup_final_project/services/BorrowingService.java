@@ -115,8 +115,8 @@ public class BorrowingService {
 
         Borrowing borrowing = new Borrowing();
         borrowing.setBook(book);
-        borrowing.setBorrowinDate(request.borrowingDate());
-        borrowing.setReturDate(request.returnDate());
+        borrowing.setBorrowingDate(request.borrowingDate());
+        borrowing.setReturnDate(request.returnDate());
         borrowing.setNotes(request.notes());
         return borrowing;
     }
@@ -175,8 +175,8 @@ public class BorrowingService {
                 borrowing.getBook().getId(),
                 user != null ? user.getId() : null,
                 user != null ? user.getFullName() : null,
-                borrowing.getBorrowinDate(),
-                borrowing.getReturDate(),
+                borrowing.getBorrowingDate(),
+                borrowing.getReturnDate(),
                 borrowing.getNotes());
     }
 }
