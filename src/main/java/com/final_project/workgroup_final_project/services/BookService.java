@@ -1,5 +1,6 @@
 package com.final_project.workgroup_final_project.services;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,22 +12,25 @@ import com.final_project.workgroup_final_project.models.records.BookRequest;
 import com.final_project.workgroup_final_project.models.records.BookResponse;
 import com.final_project.workgroup_final_project.exceptions.BookNotFoundException;
 import com.final_project.workgroup_final_project.models.Book;
-import com.final_project.workgroup_final_project.models.Borrowing;
-import com.final_project.workgroup_final_project.models.records.BorrowingResponse;
 import com.final_project.workgroup_final_project.repos.BookRepo;
+import com.final_project.workgroup_final_project.repos.BorrowingRepo;
 
 @Service
 public class BookService {
 
     private final BookRepo bookRepo;
+    private final BorrowingRepo borrowingRepo;
 
-    public BookService(BookRepo bookRepo) {
+    public BookService(BookRepo bookRepo, BorrowingRepo borrowingRepo) {
         this.bookRepo = bookRepo;
+        this.borrowingRepo = borrowingRepo;
     }
 
+    @Transactional
     public List<BookResponse> findAll() {
         return bookRepo.findAll()
                 .stream()
+                .map(this::refreshAvailability)
                 .map(this::toResponse)
                 .toList();
     }
@@ -43,14 +47,8 @@ public class BookService {
 
     @Transactional
     public BookDetailResponse getById(Integer id) {
-        Book book = findById(id);
-
-        List<BorrowingResponse> borrowings = book.getBorrowings()
-                .stream()
-                .map(this::toBorrowingResponse)
-                .toList();
-
-        return toDetailResponse(book, borrowings);
+        Book book = refreshAvailability(findById(id));
+        return toDetailResponse(book);
     }
 
     public BookResponse save(BookRequest newBookRequest) {
@@ -90,24 +88,24 @@ public class BookService {
                 book.getDisponibile());
     }
 
-    private BookDetailResponse toDetailResponse(Book book, List<BorrowingResponse> borrowings) {
+    private BookDetailResponse toDetailResponse(Book book) {
         return new BookDetailResponse(
                 book.getId(),
                 book.getTitolo(),
                 book.getAutore(),
                 book.getAnnoPubblicazione(),
-                book.getDisponibile(),
-                borrowings);
+                book.getDisponibile());
     }
 
-    private BorrowingResponse toBorrowingResponse(Borrowing borrowing) {
-        return new BorrowingResponse(
-                borrowing.getId(),
-                borrowing.getBook().getId(),
-                borrowing.getUser().getId(),
-                borrowing.getUser().getFullName(),
-                borrowing.getBorrowingDate(),
-                borrowing.getReturnDate(),
-                borrowing.getNotes());
+    private Book refreshAvailability(Book book) {
+        boolean hasActiveBorrowing = borrowingRepo.existsActiveBorrowingByBookId(book.getId(), LocalDate.now());
+        boolean available = !hasActiveBorrowing;
+
+        if (available != Boolean.TRUE.equals(book.getDisponibile())) {
+            book.setDisponibile(available);
+            return bookRepo.save(book);
+        }
+
+        return book;
     }
 }

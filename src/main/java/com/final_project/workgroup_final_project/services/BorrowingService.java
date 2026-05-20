@@ -1,5 +1,6 @@
 package com.final_project.workgroup_final_project.services;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -7,6 +8,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.final_project.workgroup_final_project.exceptions.BookNotFoundException;
 import com.final_project.workgroup_final_project.exceptions.BorrowingNotFoundException;
@@ -59,25 +61,52 @@ public class BorrowingService {
         return toResponse(borrowing);
     }
 
+    @Transactional
     public BorrowingResponse save(BorrowingRequest request) {
         Borrowing borrowing = toEntity(request);
+        Book book = borrowing.getBook();
+        refreshBookAvailability(book);
+        checkBookCanBeBorrowed(book);
+
         borrowing.setUser(currentUser());
+        book.setDisponibile(false);
+        bookRepo.save(book);
+
         return toResponse(borrowingRepo.save(borrowing));
     }
 
+    @Transactional
     public BorrowingResponse update(Integer id, BorrowingRequest request) {
         Borrowing existing = findById(id);
         checkCanAccess(existing);
         Borrowing updated = toEntity(request);
+        Book oldBook = existing.getBook();
+        Book newBook = updated.getBook();
+
+        if (borrowingRepo.existsOtherActiveBorrowingByBookId(newBook.getId(), existing.getId(), LocalDate.now())) {
+            throw new IllegalArgumentException("Book is already borrowed");
+        }
+
         updated.setId(existing.getId());
         updated.setUser(existing.getUser());
-        return toResponse(borrowingRepo.save(updated));
+        Borrowing saved = borrowingRepo.save(updated);
+
+        refreshBookAvailability(oldBook);
+        refreshBookAvailability(newBook);
+
+        return toResponse(saved);
     }
 
+    @Transactional
     public void delete(Integer id) {
+        if (!isAdmin()) {
+            throw new AccessDeniedException("Only admins can delete borrowings");
+        }
+
         Borrowing borrowing = findById(id);
-        checkCanAccess(borrowing);
+        Book book = borrowing.getBook();
         borrowingRepo.deleteById(id);
+        refreshBookAvailability(book);
     }
 
     private Borrowing toEntity(BorrowingRequest request) {
@@ -90,6 +119,18 @@ public class BorrowingService {
         borrowing.setReturnDate(request.returnDate());
         borrowing.setNotes(request.notes());
         return borrowing;
+    }
+
+    private void checkBookCanBeBorrowed(Book book) {
+        if (Boolean.FALSE.equals(book.getDisponibile())) {
+            throw new IllegalArgumentException("Book is already borrowed");
+        }
+    }
+
+    private void refreshBookAvailability(Book book) {
+        boolean hasActiveBorrowing = borrowingRepo.existsActiveBorrowingByBookId(book.getId(), LocalDate.now());
+        book.setDisponibile(!hasActiveBorrowing);
+        bookRepo.save(book);
     }
 
     private void checkCanAccess(Borrowing borrowing) {
