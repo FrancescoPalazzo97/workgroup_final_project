@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.final_project.workgroup_final_project.exceptions.BookNotFoundException;
+import com.final_project.workgroup_final_project.exceptions.BookUnavailableException;
 import com.final_project.workgroup_final_project.exceptions.BorrowingNotFoundException;
 import com.final_project.workgroup_final_project.models.Book;
 import com.final_project.workgroup_final_project.models.Borrowing;
@@ -87,7 +88,7 @@ public class BorrowingService {
             checkBookCanBeBorrowed(newBook);
         }
         if (borrowingRepo.existsOtherActiveBorrowingByBookId(newBook.getId(), existing.getId(), LocalDate.now())) {
-            throw new IllegalArgumentException("Book is already borrowed");
+            throw new BookUnavailableException();
         }
 
         updated.setId(existing.getId());
@@ -123,13 +124,13 @@ public class BorrowingService {
 
     private void checkBookCanBeBorrowed(Book book) {
         if (Boolean.FALSE.equals(book.getDisponibile())) {
-            throw new IllegalArgumentException("Book is already borrowed");
+            throw new BookUnavailableException();
         }
     }
 
     private void checkBookHasNoActiveBorrowing(Book book) {
         if (borrowingRepo.existsActiveBorrowingByBookId(book.getId(), LocalDate.now())) {
-            throw new IllegalArgumentException("Book is already borrowed");
+            throw new BookUnavailableException();
         }
     }
 
