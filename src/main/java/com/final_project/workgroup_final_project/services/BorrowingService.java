@@ -65,12 +65,11 @@ public class BorrowingService {
     public BorrowingResponse save(BorrowingRequest request) {
         Borrowing borrowing = toEntity(request);
         Book book = borrowing.getBook();
-        refreshBookAvailability(book);
         checkBookCanBeBorrowed(book);
+        checkBookHasNoActiveBorrowing(book);
 
         borrowing.setUser(currentUser());
-        book.setDisponibile(false);
-        bookRepo.save(book);
+        markBookUnavailable(book);
 
         return toResponse(borrowingRepo.save(borrowing));
     }
@@ -82,7 +81,11 @@ public class BorrowingService {
         Borrowing updated = toEntity(request);
         Book oldBook = existing.getBook();
         Book newBook = updated.getBook();
+        boolean sameBook = oldBook.getId().equals(newBook.getId());
 
+        if (!sameBook) {
+            checkBookCanBeBorrowed(newBook);
+        }
         if (borrowingRepo.existsOtherActiveBorrowingByBookId(newBook.getId(), existing.getId(), LocalDate.now())) {
             throw new IllegalArgumentException("Book is already borrowed");
         }
@@ -91,8 +94,7 @@ public class BorrowingService {
         updated.setUser(existing.getUser());
         Borrowing saved = borrowingRepo.save(updated);
 
-        refreshBookAvailability(oldBook);
-        refreshBookAvailability(newBook);
+        markBookUnavailable(newBook);
 
         return toResponse(saved);
     }
@@ -104,9 +106,7 @@ public class BorrowingService {
         }
 
         Borrowing borrowing = findById(id);
-        Book book = borrowing.getBook();
         borrowingRepo.deleteById(id);
-        refreshBookAvailability(book);
     }
 
     private Borrowing toEntity(BorrowingRequest request) {
@@ -127,9 +127,14 @@ public class BorrowingService {
         }
     }
 
-    private void refreshBookAvailability(Book book) {
-        boolean hasActiveBorrowing = borrowingRepo.existsActiveBorrowingByBookId(book.getId(), LocalDate.now());
-        book.setDisponibile(!hasActiveBorrowing);
+    private void checkBookHasNoActiveBorrowing(Book book) {
+        if (borrowingRepo.existsActiveBorrowingByBookId(book.getId(), LocalDate.now())) {
+            throw new IllegalArgumentException("Book is already borrowed");
+        }
+    }
+
+    private void markBookUnavailable(Book book) {
+        book.setDisponibile(false);
         bookRepo.save(book);
     }
 
