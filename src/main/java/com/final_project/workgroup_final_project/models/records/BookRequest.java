@@ -9,8 +9,6 @@ public record BookRequest(
 
         @NotBlank(message = "L'autore è obbligatorio") @Size(min = 2, max = 255, message = "Il nome dell'autore non può superare i 255 caratteri") String autore,
 
-        @NotNull(message = "L'anno di pubblicazione è obbligatorio") Integer annoPubblicazione,
-
-        @NotNull(message = "Il campo disponibile è obbligatorio") Boolean disponibile) {
-
+        @NotNull(message = "L'anno di pubblicazione è obbligatorio") Integer annoPubblicazione) {
 }
+

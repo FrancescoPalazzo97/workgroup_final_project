@@ -13,7 +13,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 
@@ -38,7 +37,6 @@ public class Borrowing {
     @Column(name = "borrowing_date", nullable = false)
     private LocalDate borrowingDate;
 
-    @FutureOrPresent(message = "The return date cannot be set in the past")
     @Column(name = "return_date")
     private LocalDate returnDate;
 

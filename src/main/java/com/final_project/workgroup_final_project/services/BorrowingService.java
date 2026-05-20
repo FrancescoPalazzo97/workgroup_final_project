@@ -1,6 +1,5 @@
 package com.final_project.workgroup_final_project.services;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,29 +64,31 @@ public class BorrowingService {
     @Transactional
     public BorrowingResponse save(BorrowingRequest request) {
         Borrowing borrowing = toEntity(request);
+        borrowing.setReturnDate(null);
         Book book = borrowing.getBook();
-        checkBookCanBeBorrowed(book);
-        checkBookHasNoActiveBorrowing(book);
+
+        if (borrowingRepo.existsActiveBorrowingByBookId(book.getId())) {
+            throw new BookUnavailableException();
+        }
 
         borrowing.setUser(currentUser());
-        markBookUnavailable(book);
+        Borrowing saved = borrowingRepo.save(borrowing);
+        recomputeAvailability(book);
 
-        return toResponse(borrowingRepo.save(borrowing));
+        return toResponse(saved);
     }
 
     @Transactional
     public BorrowingResponse update(Integer id, BorrowingRequest request) {
         Borrowing existing = findById(id);
         checkCanAccess(existing);
-        Borrowing updated = toEntity(request);
         Book oldBook = existing.getBook();
+        Borrowing updated = toEntity(request);
         Book newBook = updated.getBook();
         boolean sameBook = oldBook.getId().equals(newBook.getId());
 
-        if (!sameBook) {
-            checkBookCanBeBorrowed(newBook);
-        }
-        if (borrowingRepo.existsOtherActiveBorrowingByBookId(newBook.getId(), existing.getId(), LocalDate.now())) {
+        if (updated.getReturnDate() == null
+                && borrowingRepo.existsOtherActiveBorrowingByBookId(newBook.getId(), existing.getId())) {
             throw new BookUnavailableException();
         }
 
@@ -95,7 +96,10 @@ public class BorrowingService {
         updated.setUser(existing.getUser());
         Borrowing saved = borrowingRepo.save(updated);
 
-        markBookUnavailable(newBook);
+        recomputeAvailability(oldBook);
+        if (!sameBook) {
+            recomputeAvailability(newBook);
+        }
 
         return toResponse(saved);
     }
@@ -107,7 +111,9 @@ public class BorrowingService {
         }
 
         Borrowing borrowing = findById(id);
-        borrowingRepo.deleteById(id);
+        Book book = borrowing.getBook();
+        borrowingRepo.delete(borrowing);
+        recomputeAvailability(book);
     }
 
     private Borrowing toEntity(BorrowingRequest request) {
@@ -122,20 +128,9 @@ public class BorrowingService {
         return borrowing;
     }
 
-    private void checkBookCanBeBorrowed(Book book) {
-        if (Boolean.FALSE.equals(book.getDisponibile())) {
-            throw new BookUnavailableException();
-        }
-    }
-
-    private void checkBookHasNoActiveBorrowing(Book book) {
-        if (borrowingRepo.existsActiveBorrowingByBookId(book.getId(), LocalDate.now())) {
-            throw new BookUnavailableException();
-        }
-    }
-
-    private void markBookUnavailable(Book book) {
-        book.setDisponibile(false);
+    private void recomputeAvailability(Book book) {
+        boolean hasActive = borrowingRepo.existsActiveBorrowingByBookId(book.getId());
+        book.setDisponibile(!hasActive);
         bookRepo.save(book);
     }
 
