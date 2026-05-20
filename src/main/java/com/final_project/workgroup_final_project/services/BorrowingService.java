@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.final_project.workgroup_final_project.exceptions.BookNotFoundException;
+import com.final_project.workgroup_final_project.exceptions.BookUnavailableException;
 import com.final_project.workgroup_final_project.exceptions.BorrowingNotFoundException;
 import com.final_project.workgroup_final_project.models.Book;
 import com.final_project.workgroup_final_project.models.Borrowing;
@@ -65,12 +66,11 @@ public class BorrowingService {
     public BorrowingResponse save(BorrowingRequest request) {
         Borrowing borrowing = toEntity(request);
         Book book = borrowing.getBook();
-        refreshBookAvailability(book);
         checkBookCanBeBorrowed(book);
+        checkBookHasNoActiveBorrowing(book);
 
         borrowing.setUser(currentUser());
-        book.setDisponibile(false);
-        bookRepo.save(book);
+        markBookUnavailable(book);
 
         return toResponse(borrowingRepo.save(borrowing));
     }
@@ -82,17 +82,20 @@ public class BorrowingService {
         Borrowing updated = toEntity(request);
         Book oldBook = existing.getBook();
         Book newBook = updated.getBook();
+        boolean sameBook = oldBook.getId().equals(newBook.getId());
 
+        if (!sameBook) {
+            checkBookCanBeBorrowed(newBook);
+        }
         if (borrowingRepo.existsOtherActiveBorrowingByBookId(newBook.getId(), existing.getId(), LocalDate.now())) {
-            throw new IllegalArgumentException("Book is already borrowed");
+            throw new BookUnavailableException();
         }
 
         updated.setId(existing.getId());
         updated.setUser(existing.getUser());
         Borrowing saved = borrowingRepo.save(updated);
 
-        refreshBookAvailability(oldBook);
-        refreshBookAvailability(newBook);
+        markBookUnavailable(newBook);
 
         return toResponse(saved);
     }
@@ -104,9 +107,7 @@ public class BorrowingService {
         }
 
         Borrowing borrowing = findById(id);
-        Book book = borrowing.getBook();
         borrowingRepo.deleteById(id);
-        refreshBookAvailability(book);
     }
 
     private Borrowing toEntity(BorrowingRequest request) {
@@ -123,13 +124,18 @@ public class BorrowingService {
 
     private void checkBookCanBeBorrowed(Book book) {
         if (Boolean.FALSE.equals(book.getDisponibile())) {
-            throw new IllegalArgumentException("Book is already borrowed");
+            throw new BookUnavailableException();
         }
     }
 
-    private void refreshBookAvailability(Book book) {
-        boolean hasActiveBorrowing = borrowingRepo.existsActiveBorrowingByBookId(book.getId(), LocalDate.now());
-        book.setDisponibile(!hasActiveBorrowing);
+    private void checkBookHasNoActiveBorrowing(Book book) {
+        if (borrowingRepo.existsActiveBorrowingByBookId(book.getId(), LocalDate.now())) {
+            throw new BookUnavailableException();
+        }
+    }
+
+    private void markBookUnavailable(Book book) {
+        book.setDisponibile(false);
         bookRepo.save(book);
     }
 

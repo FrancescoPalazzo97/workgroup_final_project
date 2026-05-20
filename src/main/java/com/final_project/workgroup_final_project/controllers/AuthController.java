@@ -29,7 +29,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
-            return ResponseEntity.ok(authService.register(request));
+            return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
         } catch (UserAlreadyExistsException ex) {
             return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
         }
