@@ -106,8 +106,8 @@ public class BookService {
                 borrowing.getBook().getId(),
                 borrowing.getUser().getId(),
                 borrowing.getUser().getFullName(),
-                borrowing.getBorrowinDate(),
-                borrowing.getReturDate(),
+                borrowing.getBorrowingDate(),
+                borrowing.getReturnDate(),
                 borrowing.getNotes());
     }
 }

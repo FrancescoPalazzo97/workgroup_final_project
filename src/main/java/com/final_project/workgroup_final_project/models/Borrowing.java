@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -34,10 +35,12 @@ public class Borrowing {
 
     @NotNull(message = "The borrowing date cannot be null")
     @PastOrPresent(message = "The borrowing date cannot be set in the future")
-    private LocalDate borrowinDate;
+    @Column(name = "borrowing_date", nullable = false)
+    private LocalDate borrowingDate;
 
     @FutureOrPresent(message = "The return date cannot be set in the past")
-    private LocalDate returDate;
+    @Column(name = "return_date")
+    private LocalDate returnDate;
 
     @Lob
     private String notes;
@@ -66,20 +69,20 @@ public class Borrowing {
         this.user = user;
     }
 
-    public LocalDate getBorrowinDate() {
-        return this.borrowinDate;
+    public LocalDate getBorrowingDate() {
+        return this.borrowingDate;
     }
 
-    public void setBorrowinDate(LocalDate borrowinDate) {
-        this.borrowinDate = borrowinDate;
+    public void setBorrowingDate(LocalDate borrowingDate) {
+        this.borrowingDate = borrowingDate;
     }
 
-    public LocalDate getReturDate() {
-        return this.returDate;
+    public LocalDate getReturnDate() {
+        return this.returnDate;
     }
 
-    public void setReturDate(LocalDate returDate) {
-        this.returDate = returDate;
+    public void setReturnDate(LocalDate returnDate) {
+        this.returnDate = returnDate;
     }
 
     public String getNotes() {

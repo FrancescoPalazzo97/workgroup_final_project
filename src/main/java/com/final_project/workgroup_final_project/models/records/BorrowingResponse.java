@@ -5,7 +5,7 @@ import java.time.LocalDate;
 public record BorrowingResponse(
         Integer id,
         Integer bookId,
-        Long userId,
+        Integer userId,
         String userFullName,
         LocalDate borrowingDate,
         LocalDate returnDate,
