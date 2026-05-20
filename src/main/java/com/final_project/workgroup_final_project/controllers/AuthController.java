@@ -1,7 +1,6 @@
 package com.final_project.workgroup_final_project.controllers;
 
 import com.final_project.workgroup_final_project.exceptions.UserAlreadyExistsException;
-import com.final_project.workgroup_final_project.models.records.AuthResponse;
 import com.final_project.workgroup_final_project.models.records.ErrorResponse;
 import com.final_project.workgroup_final_project.models.records.LoginRequest;
 import com.final_project.workgroup_final_project.models.records.RegisterRequest;
