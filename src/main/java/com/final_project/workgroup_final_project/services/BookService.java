@@ -44,15 +44,16 @@ public class BookService {
     }
 
     public BookResponse save(BookRequest newBookRequest) {
-        Book newBook = toEntity(newBookRequest);
+        Book newBook = new Book();
+        applyRequest(newBook, newBookRequest);
+        newBook.setDisponibile(true);
         return toResponse(bookRepo.save(newBook));
     }
 
     public BookResponse update(Integer id, BookRequest bookRequestUpdate) {
-        Book oldBook = findById(id);
-        Book bookUpdate = toEntity(bookRequestUpdate);
-        bookUpdate.setId(oldBook.getId());
-        return toResponse(bookRepo.save(bookUpdate));
+        Book book = findById(id);
+        applyRequest(book, bookRequestUpdate);
+        return toResponse(bookRepo.save(book));
     }
 
     public void delete(Integer id) {
@@ -63,12 +64,10 @@ public class BookService {
         bookRepo.deleteById(id);
     }
 
-    private Book toEntity(BookRequest bookRequest) {
-        return new Book(
-                bookRequest.titolo(),
-                bookRequest.autore(),
-                bookRequest.annoPubblicazione(),
-                bookRequest.disponibile());
+    private void applyRequest(Book book, BookRequest request) {
+        book.setTitolo(request.titolo());
+        book.setAutore(request.autore());
+        book.setAnnoPubblicazione(request.annoPubblicazione());
     }
 
     private BookResponse toResponse(Book book) {

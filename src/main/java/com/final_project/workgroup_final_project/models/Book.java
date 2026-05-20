@@ -53,13 +53,6 @@ public class Book {
     public Book() {
     }
 
-    public Book(String titolo, String autore, Integer annoPubblicazione, Boolean disponibile) {
-        this.titolo = titolo;
-        this.autore = autore;
-        this.annoPubblicazione = annoPubblicazione;
-        this.disponibile = disponibile;
-    }
-
     public Integer getId() {
         return id;
     }

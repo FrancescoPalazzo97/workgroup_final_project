@@ -2,7 +2,7 @@ package com.final_project.workgroup_final_project.models.records;
 
 import java.time.LocalDate;
 
-import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 
@@ -13,8 +13,12 @@ public record BorrowingRequest(
         @PastOrPresent(message = "La data di prestito non può essere nel futuro")
         LocalDate borrowingDate,
 
-        @FutureOrPresent(message = "La data di restituzione non può essere nel passato")
         LocalDate returnDate,
 
         String notes) {
+
+        @AssertTrue(message = "La data di restituzione non può essere antecedente alla data di prestito")
+        public boolean isReturnDateNotBeforeBorrowingDate() {
+                return returnDate == null || borrowingDate == null || !returnDate.isBefore(borrowingDate);
+        }
 }

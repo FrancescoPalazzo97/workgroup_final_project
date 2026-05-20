@@ -1,6 +1,5 @@
 package com.final_project.workgroup_final_project.repos;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,19 +15,18 @@ public interface BorrowingRepo extends JpaRepository<Borrowing, Integer> {
             select count(b) > 0
             from Borrowing b
             where b.book.id = :bookId
-            and (b.returnDate is null or b.returnDate >= :today)
+            and b.returnDate is null
             """)
-    boolean existsActiveBorrowingByBookId(@Param("bookId") Integer bookId, @Param("today") LocalDate today);
+    boolean existsActiveBorrowingByBookId(@Param("bookId") Integer bookId);
 
     @Query("""
             select count(b) > 0
             from Borrowing b
             where b.book.id = :bookId
             and b.id <> :borrowingId
-            and (b.returnDate is null or b.returnDate >= :today)
+            and b.returnDate is null
             """)
     boolean existsOtherActiveBorrowingByBookId(
             @Param("bookId") Integer bookId,
-            @Param("borrowingId") Integer borrowingId,
-            @Param("today") LocalDate today);
+            @Param("borrowingId") Integer borrowingId);
 }
