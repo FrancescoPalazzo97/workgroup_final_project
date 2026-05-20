@@ -1,11 +1,9 @@
 package com.final_project.workgroup_final_project.services;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.final_project.workgroup_final_project.models.records.BookDetailResponse;
 import com.final_project.workgroup_final_project.models.records.BookRequest;
@@ -13,24 +11,19 @@ import com.final_project.workgroup_final_project.models.records.BookResponse;
 import com.final_project.workgroup_final_project.exceptions.BookNotFoundException;
 import com.final_project.workgroup_final_project.models.Book;
 import com.final_project.workgroup_final_project.repos.BookRepo;
-import com.final_project.workgroup_final_project.repos.BorrowingRepo;
 
 @Service
 public class BookService {
 
     private final BookRepo bookRepo;
-    private final BorrowingRepo borrowingRepo;
 
-    public BookService(BookRepo bookRepo, BorrowingRepo borrowingRepo) {
+    public BookService(BookRepo bookRepo) {
         this.bookRepo = bookRepo;
-        this.borrowingRepo = borrowingRepo;
     }
 
-    @Transactional
     public List<BookResponse> findAll() {
         return bookRepo.findAll()
                 .stream()
-                .map(this::refreshAvailability)
                 .map(this::toResponse)
                 .toList();
     }
@@ -45,9 +38,8 @@ public class BookService {
         return result.get();
     }
 
-    @Transactional
     public BookDetailResponse getById(Integer id) {
-        Book book = refreshAvailability(findById(id));
+        Book book = findById(id);
         return toDetailResponse(book);
     }
 
@@ -97,15 +89,4 @@ public class BookService {
                 book.getDisponibile());
     }
 
-    private Book refreshAvailability(Book book) {
-        boolean hasActiveBorrowing = borrowingRepo.existsActiveBorrowingByBookId(book.getId(), LocalDate.now());
-        boolean available = !hasActiveBorrowing;
-
-        if (available != Boolean.TRUE.equals(book.getDisponibile())) {
-            book.setDisponibile(available);
-            return bookRepo.save(book);
-        }
-
-        return book;
-    }
 }
