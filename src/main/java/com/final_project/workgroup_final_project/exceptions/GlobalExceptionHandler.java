@@ -38,6 +38,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(e);
     }
 
+    @ExceptionHandler(BookHasBorrowingHistoryException.class)
+    public ResponseEntity<ErrorResponse> handleBookHasBorrowingHistory(BookHasBorrowingHistoryException ex) {
+        ErrorResponse e = createErrorResponse(ex, HttpStatus.CONFLICT);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(e);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
         ErrorResponse e = createErrorResponse(ex, HttpStatus.BAD_REQUEST);
@@ -56,6 +63,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ValidationErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
+        ex.getBindingResult().getGlobalErrors().forEach(e -> errors.put(e.getObjectName(), e.getDefaultMessage()));
 
         ValidationErrorResponse e = new ValidationErrorResponse(
                 "Validation error",

@@ -63,8 +63,11 @@ public class BorrowingService {
 
     @Transactional
     public BorrowingResponse save(BorrowingRequest request) {
+        if (request.returnDate() != null) {
+            throw new IllegalArgumentException("New borrowings cannot already have a return date");
+        }
+
         Borrowing borrowing = toEntity(request);
-        borrowing.setReturnDate(null);
         Book book = borrowing.getBook();
 
         if (borrowingRepo.existsActiveBorrowingByBookId(book.getId())) {
@@ -117,7 +120,7 @@ public class BorrowingService {
     }
 
     private Borrowing toEntity(BorrowingRequest request) {
-        Book book = bookRepo.findById(request.bookId())
+        Book book = bookRepo.findByIdForUpdate(request.bookId())
                 .orElseThrow(() -> new BookNotFoundException(request.bookId()));
 
         Borrowing borrowing = new Borrowing();

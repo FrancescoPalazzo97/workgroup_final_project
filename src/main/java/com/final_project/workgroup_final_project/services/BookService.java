@@ -8,17 +8,21 @@ import org.springframework.stereotype.Service;
 import com.final_project.workgroup_final_project.models.records.BookDetailResponse;
 import com.final_project.workgroup_final_project.models.records.BookRequest;
 import com.final_project.workgroup_final_project.models.records.BookResponse;
+import com.final_project.workgroup_final_project.exceptions.BookHasBorrowingHistoryException;
 import com.final_project.workgroup_final_project.exceptions.BookNotFoundException;
 import com.final_project.workgroup_final_project.models.Book;
 import com.final_project.workgroup_final_project.repos.BookRepo;
+import com.final_project.workgroup_final_project.repos.BorrowingRepo;
 
 @Service
 public class BookService {
 
     private final BookRepo bookRepo;
+    private final BorrowingRepo borrowingRepo;
 
-    public BookService(BookRepo bookRepo) {
+    public BookService(BookRepo bookRepo, BorrowingRepo borrowingRepo) {
         this.bookRepo = bookRepo;
+        this.borrowingRepo = borrowingRepo;
     }
 
     public List<BookResponse> findAll() {
@@ -59,6 +63,10 @@ public class BookService {
     public void delete(Integer id) {
         if (!bookRepo.existsById(id)) {
             throw new BookNotFoundException(id);
+        }
+
+        if (borrowingRepo.existsByBookId(id)) {
+            throw new BookHasBorrowingHistoryException(id);
         }
 
         bookRepo.deleteById(id);

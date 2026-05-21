@@ -11,7 +11,30 @@
     { "key": "luigiToken", "value": "" },
     { "key": "createdBookId", "value": "" },
     { "key": "createdBorrowingId", "value": "" },
-    { "key": "marioBorrowingId", "value": "" }
+    { "key": "marioBorrowingId", "value": "" },
+    { "key": "today", "value": "" },
+    { "key": "futureDate", "value": "" },
+    { "key": "pastDate", "value": "" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const pad = (value) => String(value).padStart(2, \"0\");",
+          "const formatDate = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;",
+          "const today = new Date();",
+          "const futureDate = new Date(today);",
+          "futureDate.setDate(today.getDate() + 7);",
+          "const pastDate = new Date(today);",
+          "pastDate.setDate(today.getDate() - 7);",
+          "pm.collectionVariables.set(\"today\", formatDate(today));",
+          "pm.collectionVariables.set(\"futureDate\", formatDate(futureDate));",
+          "pm.collectionVariables.set(\"pastDate\", formatDate(pastDate));"
+        ]
+      }
+    }
   ],
   "item": [
     {
@@ -114,7 +137,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"new.user@test.com\",\n  \"password\": \"test123\",\n  \"fullName\": \"New Test User\"\n}"
+              "raw": "{\n  \"email\": \"new.user+{{$timestamp}}@test.com\",\n  \"password\": \"test123\",\n  \"fullName\": \"New Test User\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
@@ -180,7 +203,10 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"contiene borrowings\", () => pm.expect(pm.response.json()).to.have.property(\"borrowings\"));"
+                  "const res = pm.response.json();",
+                  "pm.test(\"schema dettaglio libro\", () => {",
+                  "  pm.expect(res).to.have.all.keys(\"id\", \"titolo\", \"autore\", \"annoPubblicazione\", \"disponibile\");",
+                  "});"
                 ]
               }
             }
@@ -196,7 +222,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titolo\": \"Il fu Mattia Pascal\",\n  \"autore\": \"Luigi Pirandello\",\n  \"annoPubblicazione\": 1904,\n  \"disponibile\": true\n}"
+              "raw": "{\n  \"titolo\": \"Il fu Mattia Pascal\",\n  \"autore\": \"Luigi Pirandello\",\n  \"annoPubblicazione\": 1904\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/books",
@@ -230,7 +256,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titolo\": \"Il fu Mattia Pascal (ed. riveduta)\",\n  \"autore\": \"Luigi Pirandello\",\n  \"annoPubblicazione\": 1904,\n  \"disponibile\": false\n}"
+              "raw": "{\n  \"titolo\": \"Il fu Mattia Pascal (ed. riveduta)\",\n  \"autore\": \"Luigi Pirandello\",\n  \"annoPubblicazione\": 1904\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
@@ -289,7 +315,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookId\": 1,\n  \"borrowingDate\": \"2026-05-19\",\n  \"returnDate\": \"2026-06-19\",\n  \"notes\": \"Primo prestito di test\"\n}"
+              "raw": "{\n  \"bookId\": 1,\n  \"borrowingDate\": \"{{today}}\",\n  \"notes\": \"Primo prestito di test\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/borrowings",
@@ -308,6 +334,7 @@
                   "pm.collectionVariables.set(\"marioBorrowingId\", res.id);",
                   "pm.test(\"status 201\", () => pm.response.to.have.status(201));",
                   "pm.test(\"userFullName = Mario Rossi\", () => pm.expect(res.userFullName).to.eql(\"Mario Rossi\"));",
+                  "pm.test(\"prestito attivo senza returnDate\", () => pm.expect(res.returnDate).to.eql(null));",
                   "console.log(\"createdBorrowingId:\", res.id);"
                 ]
               }
@@ -399,7 +426,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookId\": 1,\n  \"borrowingDate\": \"2026-05-19\",\n  \"returnDate\": \"2026-07-19\",\n  \"notes\": \"Estensione prestito\"\n}"
+              "raw": "{\n  \"bookId\": 1,\n  \"borrowingDate\": \"{{today}}\",\n  \"returnDate\": \"{{today}}\",\n  \"notes\": \"Restituzione registrata\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/borrowings/{{createdBorrowingId}}",
@@ -413,15 +440,17 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "const res = pm.response.json();",
                   "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"notes aggiornate\", () => pm.expect(pm.response.json().notes).to.eql(\"Estensione prestito\"));"
+                  "pm.test(\"notes aggiornate\", () => pm.expect(res.notes).to.eql(\"Restituzione registrata\"));",
+                  "pm.test(\"returnDate impostata\", () => pm.expect(res.returnDate).to.eql(pm.collectionVariables.get(\"today\")));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "DELETE /api/borrowings/{id} (USER, proprio)",
+          "name": "DELETE /api/borrowings/{id} con USER token -> 403",
           "request": {
             "method": "DELETE",
             "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
@@ -437,7 +466,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"status 204\", () => pm.response.to.have.status(204));"
+                  "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
                 ]
               }
             }
@@ -455,7 +484,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titolo\": \"X\",\n  \"autore\": \"Y\",\n  \"annoPubblicazione\": 2020,\n  \"disponibile\": true\n}"
+              "raw": "{\n  \"titolo\": \"X\",\n  \"autore\": \"Y\",\n  \"annoPubblicazione\": 2020\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/books",
@@ -508,7 +537,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titolo\": \"Test\",\n  \"autore\": \"Autore\",\n  \"annoPubblicazione\": 2020,\n  \"disponibile\": true\n}"
+              "raw": "{\n  \"titolo\": \"Test\",\n  \"autore\": \"Autore\",\n  \"annoPubblicazione\": 2020\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/books",
@@ -552,7 +581,7 @@
           ]
         },
         {
-          "name": "GET prestito di Mario con token Luigi -> 404",
+          "name": "GET prestito di Mario con token Luigi -> 403",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{luigiToken}}" }],
@@ -568,7 +597,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"status 404 (nasconde esistenza)\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
                 ]
               }
             }
@@ -643,7 +672,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"autore\": \"X\",\n  \"annoPubblicazione\": 2020,\n  \"disponibile\": true\n}"
+              "raw": "{\n  \"autore\": \"Autore valido\",\n  \"annoPubblicazione\": 2020\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/books",
@@ -664,7 +693,7 @@
           ]
         },
         {
-          "name": "Book anno < 1000 -> 400",
+          "name": "Book senza annoPubblicazione -> 400",
           "request": {
             "method": "POST",
             "header": [
@@ -673,7 +702,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titolo\": \"Test\",\n  \"autore\": \"Test\",\n  \"annoPubblicazione\": 500,\n  \"disponibile\": true\n}"
+              "raw": "{\n  \"titolo\": \"Test\",\n  \"autore\": \"Test\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/books",
@@ -703,7 +732,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"borrowingDate\": \"2026-05-19\"\n}"
+              "raw": "{\n  \"borrowingDate\": \"{{today}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/borrowings",
@@ -733,7 +762,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookId\": 1,\n  \"borrowingDate\": \"2030-01-01\",\n  \"returnDate\": \"2030-02-01\"\n}"
+              "raw": "{\n  \"bookId\": 1,\n  \"borrowingDate\": \"{{futureDate}}\",\n  \"returnDate\": \"{{futureDate}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/borrowings",
@@ -754,7 +783,7 @@
           ]
         },
         {
-          "name": "Borrowing returnDate passata -> 400",
+          "name": "Borrowing returnDate prima di borrowingDate -> 400",
           "request": {
             "method": "POST",
             "header": [
@@ -763,7 +792,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookId\": 1,\n  \"borrowingDate\": \"2026-05-19\",\n  \"returnDate\": \"2020-01-01\"\n}"
+              "raw": "{\n  \"bookId\": 1,\n  \"borrowingDate\": \"{{today}}\",\n  \"returnDate\": \"{{pastDate}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/borrowings",
@@ -898,7 +927,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookId\": 9999,\n  \"borrowingDate\": \"2026-05-19\"\n}"
+              "raw": "{\n  \"bookId\": 9999,\n  \"borrowingDate\": \"{{today}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/borrowings",
@@ -925,7 +954,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookId\": 1,\n  \"borrowingDate\": \"2026-05-19\"\n}"
+              "raw": "{\n  \"bookId\": 1,\n  \"borrowingDate\": \"{{today}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/borrowings",
@@ -940,6 +969,29 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/borrowings/{id} (ADMIN cleanup) -> 204",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/borrowings/{{createdBorrowingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "borrowings", "{{createdBorrowingId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 204\", () => pm.response.to.have.status(204));"
                 ]
               }
             }
