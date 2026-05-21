@@ -7,6 +7,8 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -43,6 +45,27 @@ public class GlobalExceptionHandler {
         ErrorResponse e = createErrorResponse(ex, HttpStatus.CONFLICT);
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(e);
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExists(UserAlreadyExistsException ex) {
+        ErrorResponse e = createErrorResponse(ex, HttpStatus.CONFLICT);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(e);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
+        ErrorResponse e = createErrorResponse("Invalid email or password", HttpStatus.UNAUTHORIZED);
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
+        ErrorResponse e = createErrorResponse(ex, HttpStatus.UNAUTHORIZED);
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -82,8 +105,12 @@ public class GlobalExceptionHandler {
     }
 
     private ErrorResponse createErrorResponse(Exception ex, HttpStatus status) {
+        return createErrorResponse(ex.getMessage(), status);
+    }
+
+    private ErrorResponse createErrorResponse(String message, HttpStatus status) {
         return new ErrorResponse(
-                ex.getMessage(),
+                message,
                 status.value(),
                 LocalDateTime.now());
     }
