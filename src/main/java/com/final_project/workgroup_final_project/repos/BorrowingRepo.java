@@ -11,6 +11,8 @@ import com.final_project.workgroup_final_project.models.Borrowing;
 public interface BorrowingRepo extends JpaRepository<Borrowing, Integer> {
     List<Borrowing> findByUserEmail(String email);
 
+    boolean existsByBookId(Integer bookId);
+
     @Query("""
             select count(b) > 0
             from Borrowing b

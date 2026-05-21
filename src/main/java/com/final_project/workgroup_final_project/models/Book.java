@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -47,7 +46,7 @@ public class Book {
     private Boolean disponibile;
 
     @JsonManagedReference("book-borrowings")
-    @OneToMany(mappedBy = "book", cascade = { CascadeType.REMOVE })
+    @OneToMany(mappedBy = "book")
     private List<Borrowing> borrowings;
 
     public Book() {

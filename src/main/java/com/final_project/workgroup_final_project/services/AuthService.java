@@ -34,14 +34,16 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistsException("User already exists with email: " + request.getEmail());
+        String email = normalizeEmail(request.getEmail());
+
+        if (userRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException("User already exists with email: " + email);
         }
 
         User user = new User(
-                request.getEmail(),
+                email,
                 passwordEncoder.encode(request.getPassword()),
-                request.getFullName(),
+                request.getFullName().trim(),
                 Role.USER
         );
 
@@ -52,14 +54,20 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        String email = normalizeEmail(request.getEmail());
+
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(email, request.getPassword())
         );
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
         String token = jwtService.generateToken(user);
 
         return new AuthResponse(token);
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase();
     }
 }

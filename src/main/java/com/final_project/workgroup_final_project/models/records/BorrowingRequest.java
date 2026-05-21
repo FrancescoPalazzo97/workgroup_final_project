@@ -13,6 +13,7 @@ public record BorrowingRequest(
         @PastOrPresent(message = "La data di prestito non può essere nel futuro")
         LocalDate borrowingDate,
 
+        @PastOrPresent(message = "La data di restituzione non può essere nel futuro")
         LocalDate returnDate,
 
         String notes) {

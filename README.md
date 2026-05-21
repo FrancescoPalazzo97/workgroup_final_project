@@ -329,12 +329,13 @@ Public users can explore books without logging in.
 | `GET` | `/api/borrowings/{id}` | `USER` or `ADMIN` |
 | `POST` | `/api/borrowings` | `USER` or `ADMIN` |
 | `PUT` | `/api/borrowings/{id}` | `USER` or `ADMIN` |
-| `DELETE` | `/api/borrowings/{id}` | `USER` or `ADMIN` |
+| `DELETE` | `/api/borrowings/{id}` | `ADMIN` |
 
 Borrowing visibility rules:
 
-- `ADMIN` can see and manage all borrowings.
-- `USER` can see and manage only their own borrowings.
+- `ADMIN` can see, update, and delete all borrowings.
+- `USER` can see and update only their own borrowings.
+- `USER` cannot delete borrowing records, because borrowing history must remain auditable.
 - New borrowings are linked automatically to the authenticated user from the JWT.
 
 ---
